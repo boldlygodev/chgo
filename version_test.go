@@ -28,25 +28,25 @@ func Test_parse(t *testing.T) {
 		{
 			name:    "minor",
 			args:    args{"go1.2"},
-			want:    version{Minor: 2},
+			want:    version{Minor: 2, Stage: stageRelease},
 			wantErr: false,
 		},
 		{
 			name:    "patch",
 			args:    args{"go1.2.3"},
-			want:    version{Minor: 2, Patch: 3},
+			want:    version{Minor: 2, Patch: 3, Stage: stageRelease},
 			wantErr: false,
 		},
 		{
 			name:    "rc",
 			args:    args{"go1.2rc4"},
-			want:    version{Minor: 2, Candidate: 4},
+			want:    version{Minor: 2, Stage: stageCandidate, Prerelease: 4},
 			wantErr: false,
 		},
 		{
 			name:    "beta",
-			args:    args{"go1.2beta5"},
-			want:    version{Minor: 2, Beta: 5},
+			args:    args{"go1.2beta4"},
+			want:    version{Minor: 2, Stage: stageBeta, Prerelease: 4},
 			wantErr: false,
 		},
 		{
@@ -79,10 +79,10 @@ func Test_version_String(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Minor     uint8
-		Patch     uint8
-		Beta      uint8
-		Candidate uint8
+		Minor      uint8
+		Patch      uint8
+		Stage      uint8
+		Prerelease uint8
 	}
 
 	tests := []struct {
@@ -97,23 +97,23 @@ func Test_version_String(t *testing.T) {
 		},
 		{
 			name:   "minor",
-			fields: fields{Minor: 2},
+			fields: fields{Minor: 2, Stage: stageRelease},
 			want:   "go1.2",
 		},
 		{
 			name:   "patch",
-			fields: fields{Minor: 2, Patch: 3},
+			fields: fields{Minor: 2, Patch: 3, Stage: stageRelease},
 			want:   "go1.2.3",
 		},
 		{
 			name:   "rc",
-			fields: fields{Minor: 2, Candidate: 4},
+			fields: fields{Minor: 2, Stage: stageCandidate, Prerelease: 4},
 			want:   "go1.2rc4",
 		},
 		{
 			name:   "beta",
-			fields: fields{Minor: 2, Beta: 5},
-			want:   "go1.2beta5",
+			fields: fields{Minor: 2, Stage: stageBeta, Prerelease: 4},
+			want:   "go1.2beta4",
 		},
 	}
 
@@ -124,10 +124,10 @@ func Test_version_String(t *testing.T) {
 			t.Parallel()
 
 			v := version{
-				Minor:     tt.fields.Minor,
-				Patch:     tt.fields.Patch,
-				Beta:      tt.fields.Beta,
-				Candidate: tt.fields.Candidate,
+				Minor:      tt.fields.Minor,
+				Patch:      tt.fields.Patch,
+				Stage:      tt.fields.Stage,
+				Prerelease: tt.fields.Prerelease,
 			}
 
 			got := v.String()
@@ -143,10 +143,10 @@ func Test_version_MarshalText(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Minor     uint8
-		Patch     uint8
-		Beta      uint8
-		Candidate uint8
+		Minor      uint8
+		Patch      uint8
+		Stage      uint8
+		Prerelease uint8
 	}
 
 	tests := []struct {
@@ -163,26 +163,26 @@ func Test_version_MarshalText(t *testing.T) {
 		},
 		{
 			name:    "minor",
-			fields:  fields{Minor: 2},
+			fields:  fields{Minor: 2, Stage: stageRelease},
 			want:    []byte("go1.2"),
 			wantErr: false,
 		},
 		{
 			name:    "patch",
-			fields:  fields{Minor: 2, Patch: 3},
+			fields:  fields{Minor: 2, Patch: 3, Stage: stageRelease},
 			want:    []byte("go1.2.3"),
 			wantErr: false,
 		},
 		{
 			name:    "rc",
-			fields:  fields{Minor: 2, Candidate: 4},
+			fields:  fields{Minor: 2, Stage: stageCandidate, Prerelease: 4},
 			want:    []byte("go1.2rc4"),
 			wantErr: false,
 		},
 		{
 			name:    "beta",
-			fields:  fields{Minor: 2, Beta: 5},
-			want:    []byte("go1.2beta5"),
+			fields:  fields{Minor: 2, Stage: stageBeta, Prerelease: 4},
+			want:    []byte("go1.2beta4"),
 			wantErr: false,
 		},
 	}
@@ -194,10 +194,10 @@ func Test_version_MarshalText(t *testing.T) {
 			t.Parallel()
 
 			v := version{
-				Minor:     tt.fields.Minor,
-				Patch:     tt.fields.Patch,
-				Beta:      tt.fields.Beta,
-				Candidate: tt.fields.Candidate,
+				Minor:      tt.fields.Minor,
+				Patch:      tt.fields.Patch,
+				Stage:      tt.fields.Stage,
+				Prerelease: tt.fields.Prerelease,
 			}
 
 			got, err := v.MarshalText()
@@ -216,10 +216,10 @@ func Test_version_UnmarshalText(t *testing.T) {
 	t.Parallel()
 
 	type fields struct {
-		Minor     uint8
-		Patch     uint8
-		Beta      uint8
-		Candidate uint8
+		Minor      uint8
+		Patch      uint8
+		Stage      uint8
+		Prerelease uint8
 	}
 
 	type args struct {
@@ -244,28 +244,28 @@ func Test_version_UnmarshalText(t *testing.T) {
 			name:    "minor",
 			fields:  fields{},
 			args:    args{[]byte("go1.2")},
-			want:    version{Minor: 2},
+			want:    version{Minor: 2, Stage: stageRelease},
 			wantErr: false,
 		},
 		{
 			name:    "patch",
 			fields:  fields{},
 			args:    args{[]byte("go1.2.3")},
-			want:    version{Minor: 2, Patch: 3},
+			want:    version{Minor: 2, Patch: 3, Stage: stageRelease},
 			wantErr: false,
 		},
 		{
 			name:    "rc",
 			fields:  fields{},
 			args:    args{[]byte("go1.2rc4")},
-			want:    version{Minor: 2, Candidate: 4},
+			want:    version{Minor: 2, Stage: stageCandidate, Prerelease: 4},
 			wantErr: false,
 		},
 		{
 			name:    "beta",
 			fields:  fields{},
-			args:    args{[]byte("go1.2beta5")},
-			want:    version{Minor: 2, Beta: 5},
+			args:    args{[]byte("go1.2beta4")},
+			want:    version{Minor: 2, Stage: stageBeta, Prerelease: 4},
 			wantErr: false,
 		},
 		{
@@ -284,10 +284,10 @@ func Test_version_UnmarshalText(t *testing.T) {
 			t.Parallel()
 
 			got := version{
-				Minor:     tt.fields.Minor,
-				Patch:     tt.fields.Patch,
-				Beta:      tt.fields.Beta,
-				Candidate: tt.fields.Candidate,
+				Minor:      tt.fields.Minor,
+				Patch:      tt.fields.Patch,
+				Stage:      tt.fields.Stage,
+				Prerelease: tt.fields.Patch,
 			}
 			if err := got.UnmarshalText(tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("version.UnmarshalText() error = %v, wantErr %v", err, tt.wantErr)
@@ -372,7 +372,6 @@ func Test_versions_Less(t *testing.T) {
 			args: args{1, 0},
 			want: true,
 		},
-
 		{
 			name: "minor same",
 			v:    versions{{Minor: 1}},
@@ -391,7 +390,6 @@ func Test_versions_Less(t *testing.T) {
 			args: args{1, 0},
 			want: false,
 		},
-
 		{
 			name: "patch same",
 			v:    versions{{Patch: 1}},
@@ -410,41 +408,39 @@ func Test_versions_Less(t *testing.T) {
 			args: args{1, 0},
 			want: false,
 		},
-
 		{
-			name: "rc same",
-			v:    versions{{Candidate: 1}},
+			name: "stage same",
+			v:    versions{{Stage: 1}},
 			args: args{0, 0},
 			want: false,
 		},
 		{
-			name: "rc less",
-			v:    versions{{Candidate: 1}, {Candidate: 2}},
+			name: "stage less",
+			v:    versions{{Stage: 1}, {Stage: 2}},
 			args: args{0, 1},
 			want: true,
 		},
 		{
-			name: "rc more",
-			v:    versions{{Candidate: 1}, {Candidate: 2}},
+			name: "stage more",
+			v:    versions{{Stage: 1}, {Stage: 2}},
 			args: args{1, 0},
 			want: false,
 		},
-
 		{
-			name: "beta same",
-			v:    versions{{Beta: 1}},
+			name: "prerelease same",
+			v:    versions{{Prerelease: 1}},
 			args: args{0, 0},
 			want: false,
 		},
 		{
-			name: "beta less",
-			v:    versions{{Beta: 1}, {Beta: 2}},
+			name: "prerelease less",
+			v:    versions{{Prerelease: 1}, {Prerelease: 2}},
 			args: args{0, 1},
 			want: true,
 		},
 		{
-			name: "beta more",
-			v:    versions{{Beta: 1}, {Beta: 2}},
+			name: "prerelease more",
+			v:    versions{{Prerelease: 1}, {Prerelease: 2}},
 			args: args{1, 0},
 			want: false,
 		},

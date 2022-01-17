@@ -5,13 +5,19 @@ import (
 	"fmt"
 )
 
+const (
+	stageRelease uint8 = 255 - iota
+	stageCandidate
+	stageBeta
+)
+
 var ErrInvalidVersion = errors.New("invalid version")
 
 type version struct {
-	Minor     uint8
-	Patch     uint8
-	Candidate uint8
-	Beta      uint8
+	Minor      uint8
+	Patch      uint8
+	Stage      uint8
+	Prerelease uint8
 }
 
 func parse(s string) (version, error) {
@@ -28,14 +34,16 @@ func (v version) String() string {
 
 	var pbc string
 
-	if v.Patch > 0 {
+	if v.Stage == stageRelease && v.Patch > 0 {
 		pbc = fmt.Sprintf(".%d", v.Patch)
 	}
 
-	if v.Beta > 0 {
-		pbc += fmt.Sprintf("beta%d", v.Beta)
-	} else if v.Candidate > 0 {
-		pbc += fmt.Sprintf("rc%d", v.Candidate)
+	if v.Stage == stageCandidate {
+		pbc += fmt.Sprintf("rc%d", v.Prerelease)
+	}
+
+	if v.Stage == stageBeta {
+		pbc += fmt.Sprintf("beta%d", v.Prerelease)
 	}
 
 	return fmt.Sprintf("go1.%d%s", v.Minor, pbc)
@@ -53,18 +61,26 @@ func (v *version) UnmarshalText(data []byte) error {
 	}
 
 	if _, err := fmt.Sscanf(s, "go1.%d.%d", &v.Minor, &v.Patch); err == nil {
+		v.Stage = stageRelease
+
 		return nil
 	}
 
-	if _, err := fmt.Sscanf(s, "go1.%dbeta%d", &v.Minor, &v.Beta); err == nil {
+	if _, err := fmt.Sscanf(s, "go1.%drc%d", &v.Minor, &v.Prerelease); err == nil {
+		v.Stage = stageCandidate
+
 		return nil
 	}
 
-	if _, err := fmt.Sscanf(s, "go1.%drc%d", &v.Minor, &v.Candidate); err == nil {
+	if _, err := fmt.Sscanf(s, "go1.%dbeta%d", &v.Minor, &v.Prerelease); err == nil {
+		v.Stage = stageBeta
+
 		return nil
 	}
 
 	if _, err := fmt.Sscanf(s, "go1.%d", &v.Minor); err == nil {
+		v.Stage = stageRelease
+
 		return nil
 	}
 
@@ -94,11 +110,11 @@ func (v versions) Less(i, j int) bool {
 		return v[i].Patch < v[j].Patch
 	}
 
-	if v[i].Candidate != v[j].Candidate {
-		return v[i].Candidate < v[j].Candidate
+	if v[i].Stage != v[j].Stage {
+		return v[i].Stage < v[j].Stage
 	}
 
-	return v[i].Beta < v[j].Beta
+	return v[i].Prerelease < v[j].Prerelease
 }
 
 func (v versions) Swap(i, j int) {
