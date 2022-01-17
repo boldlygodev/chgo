@@ -1,4 +1,4 @@
-module gitlab.com/boldlygo/chgo
+module boldlygo.dev/chgo
 
 go 1.18
 
