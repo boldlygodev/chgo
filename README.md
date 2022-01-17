@@ -7,6 +7,12 @@ Examples:
 - `chgo gotip`
 - `chgo latest` - installs the highest supported stable version from [go.dev/dl](go.dev/dl)
 
+Install:
+
+```sh
+go install boldlygo.dev/chgo@latest
+```
+
 ## List Mode
 
 `chgo` can also list available versions of Go by using the `--list` flag. This mode will not install and link Go versions.
