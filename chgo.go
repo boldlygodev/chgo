@@ -61,8 +61,33 @@ func latest(ctx context.Context, host string) ([]version, error) {
 	return vers, nil
 }
 
-func install(ctx context.Context, whichgo string, stdout, stderr io.Writer, ver version) error {
-	cmd := exec.CommandContext(ctx, whichgo, "install", fmt.Sprintf("golang.org/dl/%s@latest", ver))
+func githash(ctx context.Context, url string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", fmt.Errorf("githash: new request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("githash: make request: %w", err)
+	}
+
+	var branch struct {
+		Name   string `json:"name"`
+		Commit struct {
+			SHA string `json:"sha"`
+		} `json:"commit"`
+	}
+
+	if err = json.NewDecoder(resp.Body).Decode(&branch); err != nil {
+		return "", fmt.Errorf("githash: decode: %w", err)
+	}
+
+	return branch.Commit.SHA, nil
+}
+
+func install(ctx context.Context, whichgo string, stdout, stderr io.Writer, ver version, hash string) error {
+	cmd := exec.CommandContext(ctx, whichgo, "install", fmt.Sprintf("golang.org/dl/%s@%s", ver, hash))
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
@@ -125,8 +150,19 @@ func chgo(ctx context.Context, stdout, stderr io.Writer, gobin, input string) er
 
 	// install Go version if not present
 	if _, err := os.Stat(filepath.Join(gobin, ver.String())); err != nil {
-		fmt.Fprintf(stdout, "go install golang.org/dl/%s@latest\n", ver)
-		if err = install(ctx, "/usr/local/bin/go", stdout, stderr, ver); err != nil {
+		hash := "latest"
+
+		if v := ctx.Value(lookupKey); v != nil {
+			if lookup, ok := v.(bool); ok && lookup {
+				hash, err = githash(ctx, "https://api.github.com/repos/golang/dl/branches/master")
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		fmt.Fprintf(stdout, "go install golang.org/dl/%s@%s\n", ver, hash)
+		if err = install(ctx, "/usr/local/bin/go", stdout, stderr, ver, hash); err != nil {
 			return fmt.Errorf("install go %s: %w", input, err)
 		}
 	}

@@ -9,15 +9,32 @@ import (
 	"os/signal"
 )
 
+type ctxKey uint8
+
+const lookupKey ctxKey = 0
+
 func main() {
-	var list bool
+	var (
+		list   bool
+		lookup bool
+	)
 
 	flag.BoolVar(&list, "list", false, "")
 	flag.BoolVar(&list, "l", false, "")
+	flag.BoolVar(&lookup, "lookup", false, "")
 	flag.Parse()
+
+	if list && lookup {
+		fmt.Println("cannot use --list with --force")
+		os.Exit(1)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+
+	if lookup {
+		ctx = context.WithValue(ctx, lookupKey, lookup)
+	}
 
 	var run func(context.Context, io.Writer, io.Writer, string) error = chgoRun
 

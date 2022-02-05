@@ -6,6 +6,7 @@ Examples:
 - `chgo go1.17.6`
 - `chgo gotip`
 - `chgo latest` - installs the highest supported stable version from [go.dev/dl](go.dev/dl)
+- `chgo --lookup latest`  - lookup the latest Git commit when installing the requested version
 
 Install:
 
